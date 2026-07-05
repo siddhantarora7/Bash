@@ -2,6 +2,8 @@
 
 import json
 
+# A question will have an id, year of the competition, stage (school, chapter, state, nats), question text, and answer text.
+
 class Question:
     def __init__(self, id: int, year: int, stage: str, question: str, answer: str):
         self.id: int = id

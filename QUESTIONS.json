@@ -1,0 +1,5 @@
+[
+    {"id": 1, "year": 2019, "stage": "sprint", "question": "What is 7 times 8?", "answer": "56"},
+    {"id": 2, "year": 2019, "stage": "sprint", "question": "How many sides does a hexagon have?", "answer": "6"},
+    {"id": 3, "year": 2020, "stage": "sprint", "question": "What is 100 divided by 4?", "answer": "25"}
+]
