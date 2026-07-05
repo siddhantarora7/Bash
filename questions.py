@@ -43,9 +43,10 @@ def validate(path="QUESTIONS.json"):
             if field not in obj:
                 problems.append(f"Entry #{i + 1} missing {field}")
         
-        idx = obj["id"]
+        idx = obj.get("id")
         if idx in seen:
             problems.append(f"Entry #{i + 1} duplicate ID: {idx}")
+        seen.add(idx)
 
         if not str(obj.get("question", "").strip()):
             problems.append(f"Entry #{i + 1} empty question")
@@ -53,7 +54,7 @@ def validate(path="QUESTIONS.json"):
             problems.append(f"Entry #{i + 1} empty answer")
         
         blob = str(obj.get("question", "").strip()) + str(obj.get("answer", "").strip())
-        if "$" or "//" in blob:
+        if "$" in blob or "//" in blob:
             problems.append(f"Entry #{i + 1} seems to have latex")
 
     if problems:
