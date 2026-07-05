@@ -9,7 +9,7 @@ from questions import check
 import random
 
 console = Console()
-rainbow = ["red", "orange", "yellow", "green", "cyan", "blue", "indigo", "magenta"]
+rainbow = ["red", "orange1", "yellow", "green", "cyan", "blue", "blue_violet", "magenta"]
 
 t = Text()
 art = r'''    ____  ___   _____ __  __
@@ -37,6 +37,7 @@ for i in range(min(5, len(questions))):
     ind.remove(idx)
     q = questions[idx]
     question_string = q.question
+    console.print(Text(f"~ Question {i + 1} ~", style = "misty_rose3"))
     out = Text(question_string, style = "white")
     out.highlight_regex(r"\d+", "bold yellow")
     console.print(out)
@@ -46,5 +47,6 @@ for i in range(min(5, len(questions))):
         console.print("Correct!", style = "bold green")
     else:
         console.print(f"Incorrect! Answer is {q.answer}", style = "bold red")
+    console.print()
 
-print("Final score", score)
+console.print(f"☄. *. ⋆ Final Score: {score} . . . . . ╰──╮", style = "dark_sea_green1")
