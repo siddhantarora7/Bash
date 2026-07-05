@@ -67,3 +67,5 @@ def validate(path="QUESTIONS.json"):
     else:
         print('No problems!')
 
+if __name__ == "__main__":
+    validate()
