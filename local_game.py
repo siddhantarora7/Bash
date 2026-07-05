@@ -1,11 +1,14 @@
 from rich.console import Console
 from rich.text import Text
-console = Console()
+from rich.panel import Panel
+from rich.align import Align
+from rich import box
 
 from questions import load
 from questions import check
 import random
 
+console = Console()
 rainbow = ["red", "orange", "yellow", "green", "cyan", "blue", "indigo", "magenta"]
 
 t = Text()
@@ -20,7 +23,9 @@ for line in art.splitlines():
         t.append(ch, style = rainbow[x % len(rainbow)])
     t.append("\n")
 
-console.print(t)
+panel = Panel(Align.center(t), box = box.ROUNDED, title = "✦ ✧ MATH BASH ✧ ✦",  subtitle = "~ press enter to play ~", border_style = "dim white", expand = False)
+
+console.print(Align.center(panel))
 
 score = 0
 
@@ -31,12 +36,15 @@ for i in range(min(5, len(questions))):
     idx = random.choice(ind)
     ind.remove(idx)
     q = questions[idx]
-    print(q.question)
+    question_string = q.question
+    out = Text(question_string, style = "white")
+    out.highlight_regex(r"\d+", "bold yellow")
+    console.print(out)
     player_ans = input("> ")
     if check(player_ans, q.answer):
         score += 1
-        print("Correct!")
+        console.print("Correct!", style = "bold green")
     else:
-        print(f"Incorrect! It was {q.answer}")
+        console.print(f"Incorrect! Answer is {q.answer}", style = "bold red")
 
 print("Final score", score)
