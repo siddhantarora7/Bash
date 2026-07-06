@@ -1,7 +1,7 @@
 import asyncio
 import random
 
-from protocol import send_msg, read_msg
+from protocols import send_msg, read_msg
 from questions import load, check
 
 
@@ -21,6 +21,9 @@ async def handle(reader, writer):
 
         await send_msg(writer, {"type": "question", "num": i + 1, "text": q.question})
         reply = await read_msg(reader)
+
+        if reply is None:
+            break
 
         if check(reply["answer"], q.answer):
             score += 1
