@@ -9,10 +9,22 @@ class Room:
         self.queue = asyncio.Queue()
         self.players = {}
         self.scores = {}
+        self.pool = list(range(len(QUESTIONS)))
+        self.current_answer = None
+        self.num = 0
 
 QUESTIONS = load()
 
-# Client - Server communication over socket opened by main()
+# Sed question via socket
+def send_question(room, name):
+    idx = random.choice(room.pool)
+    room.pool.remove(idx)
+    q = QUESTIONS[idx]
+    room.current_answer = q.answer
+    room.num += 1
+    send_msg(room.players[name], {"type": "question", "num": room.current_num, "text": q.question})
+
+# Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     join = await read_msg(reader)
     name = join["name"]
@@ -27,6 +39,19 @@ async def handle(reader, writer):
             break
         if msg["type"] == "submit":
             await room.queue.put(("submit", name, msg["answer"]))
+
+# Core game loop
+async def room_loop(room):
+    while True:
+        event = room.queue.get()
+        t = event[0]
+
+        if t == "join":
+            name = event[1]
+            await start_question(room, name)
+        elif t == "submit":
+            name, answer = event[1], event[2]
+
 
 # Actually start server
 async def main():
