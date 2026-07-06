@@ -4,6 +4,11 @@ import random
 from protocols import send_msg, read_msg
 from questions import load, check
 
+class Room:
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.players = {}
+        self.scores = {}
 
 QUESTIONS = load()
 
