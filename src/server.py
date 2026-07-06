@@ -51,6 +51,10 @@ async def room_loop(room):
             await start_question(room, name)
         elif t == "submit":
             name, answer = event[1], event[2]
+        elif t == "leave":
+            name = event[1]
+            room.players.pop(name, None)
+            room.scores.pop(name, None)
 
 
 # Actually start server
