@@ -1,7 +1,10 @@
 import asyncio
 from rich.console import Console
 from rich.text import Text
-from protocol import send_msg, read_msg
+from rich.panel import Panel
+from rich.align import Align
+from rich import box
+from protocols import send_msg, read_msg
 
 console = Console()
 
