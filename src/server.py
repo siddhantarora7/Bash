@@ -24,7 +24,8 @@ async def broadcast(room, msg):
         await send_msg(room.players[player], msg)
 
 # Sed question via socket
-async def send_question(room, name):
+async def send_question(room):
+    room.out = set()
     idx = random.choice(room.pool)
     room.pool.remove(idx)
     q = QUESTIONS[idx]
@@ -53,7 +54,7 @@ async def handle(reader, writer):
             if name == room.host:
                 await room.queue.put(("start", name))
             else:
-                await send_msg(room.players[msg["name"]], {"type": "error", "msg": "Permission Denied: Only host can start games"})
+                await send_msg(writer, {"type": "error", "msg": "Permission Denied: Only host can start games"})
         elif msg["type"] == "submit":
             await room.queue.put(("submit", name, msg["answer"]))
 
@@ -65,22 +66,27 @@ async def room_loop(room):
 
         if t == "start":
             room.phase = "ready"
-            await send_question(room, name)
+            await send_question(room)
         elif t == "submit":
-            if room.phase == "ready":
-                answer = event[2]
-                if check(answer, room.current_answer):
-                    room.scores[name] += 1
-                    await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
-                    await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})
-                    await send_question(room, name)            
+            if name not in room.out:
+                if room.phase == "ready":
+                    answer = event[2]
+                    if check(answer, room.current_answer):
+                        room.scores[name] += 1
+                        await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
+                        await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})   
+
+                        if room.num >= min(5, len(QUESTIONS)):
+                            await broadcast(room, {"type": "game_over", "final_scores": room.scores})
+                        else:
+                            await send_question(room)  
+                    else:
+                        room.out.add(name)
+                        await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
                 else:
-                    await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
-                
-                if room.num >= min(5, len(QUESTIONS)):
-                    await broadcast(room, {"type": "game_over", "final_score": room.scores[name]})
+                    await send_msg(room.players[name], {"type": "error", "msg": "Game has not started yet"})
             else:
-                await send_msg(room.players[name], {"type": "error", "msg": "Game has not started yet"})
+                await send_msg(room.players[name], {"type": "reanswer", "msg": "Player cannot answer twice"})
 
         elif t == "leave":
             room.players.pop(name, None)
