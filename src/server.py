@@ -16,7 +16,7 @@ class Room:
         self.num = 0
 
 # Sed question via socket
-def send_question(room, name):
+async def send_question(room, name):
     idx = random.choice(room.pool)
     room.pool.remove(idx)
     q = QUESTIONS[idx]
@@ -53,9 +53,9 @@ async def room_loop(room):
             name, answer = event[1], event[2]
             if check(answer, room.current_answer):
                 room.scores[name] += 1
-                await send_msg(room.players[name], {"type": "result", "verdict": "correct"})
+                await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
             else:
-                await send_msg(room.players[name], {"type": "result", "verdict": "wrong"})
+                await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
             
             if room.num >= min(5, len(QUESTIONS)):
                 await send_msg(room.players[name], {"type": "game_over", "final_score": room.scores[name]})
