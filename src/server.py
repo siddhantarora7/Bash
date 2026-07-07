@@ -23,6 +23,10 @@ async def broadcast(room, msg):
     for player in room.players:
         await send_msg(room.players[player], msg)
 
+async def start_timer(room, num, time=15):
+    await asyncio.sleep(time)
+    await room.queue.put(("timeout", num))
+
 # Sed question via socket
 async def send_question(room):
     room.out = set()
@@ -62,12 +66,13 @@ async def handle(reader, writer):
 async def room_loop(room):
     while True:
         event = await room.queue.get()
-        t, name = event[0], event[1]
+        t = event[0]
 
         if t == "start":
             room.phase = "ready"
             await send_question(room)
         elif t == "submit":
+            name = event[1]
             if name not in room.out:
                 if room.phase == "ready":
                     answer = event[2]
@@ -87,8 +92,12 @@ async def room_loop(room):
                     await send_msg(room.players[name], {"type": "error", "msg": "Game has not started yet"})
             else:
                 await send_msg(room.players[name], {"type": "reanswer", "msg": "Player cannot answer twice"})
-
+        elif t == "timeout":
+            num = event[1]
+            if num == room.num:
+                await broadcast(room, {"type": "timeout", })
         elif t == "leave":
+            name = event[1]
             room.players.pop(name, None)
             room.scores.pop(name, None)
 
