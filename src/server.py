@@ -35,7 +35,7 @@ async def send_question(room):
     q = QUESTIONS[idx]
     room.current_answer = q.answer
     room.num += 1
-    start_timer(room, room.num)
+    asyncio.create_task(start_timer(room, room.num))
     await broadcast(room, {"type": "question", "num": room.num, "text": q.question})
 
 # Client - Server communication over socket opened by main(), handles queue input only
@@ -98,7 +98,7 @@ async def room_loop(room):
             if num == room.num:
                 await broadcast(room, {"type": "global", "msg": "Time's out!"})
                 if room.num >= min(5, len(QUESTIONS)):
-                    await broadcast(room. {"type": "game_over", "final_scores", room.scores})
+                    await broadcast(room, {"type": "game_over", "final_scores": room.scores})
                 else:
                     await send_question(room)
         elif t == "leave":
