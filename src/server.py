@@ -49,7 +49,7 @@ async def handle(reader, writer):
             await room.queue.put(("leave", name))
             break
         if msg["type"] == "start":
-            if msg["name"] == room.host:
+            if name == room.host:
                 await room.queue.put(("start", name))
             else:
                 await send_msg(room.players[msg["name"]], {"type": "error", "msg": "Permission Denied: Only host can start games"})
