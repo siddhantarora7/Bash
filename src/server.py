@@ -52,7 +52,7 @@ async def handle(reader, writer):
             if msg["name"] == room.host:
                 await room.queue.put(("start", name))
             else:
-                await send_msg(room.players[msg["name"]], "Permission Denied: Only host can start games")
+                await send_msg(room.players[msg["name"]], {"type": "error", "msg": "Permission Denied: Only host can start games"})
         elif msg["type"] == "submit":
             await room.queue.put(("submit", name, msg["answer"]))
 
@@ -69,7 +69,7 @@ async def room_loop(room):
             answer = event[2]
             if check(answer, room.current_answer):
                 room.scores[name] += 1
-                await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer}))
+                await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
                 await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})
             else:
                 await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
