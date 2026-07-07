@@ -13,6 +13,7 @@ class Room:
         self.phase = "waiting"
         self.players = {}
         self.scores = {}
+        self.out = set()
         self.pool = list(range(len(QUESTIONS)))
         self.current_answer = None
         self.num = 0
@@ -66,18 +67,21 @@ async def room_loop(room):
             room.phase = "ready"
             await send_question(room, name)
         elif t == "submit":
-            answer = event[2]
-            if check(answer, room.current_answer):
-                room.scores[name] += 1
-                await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
-                await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})
+            if room.phase == "ready":
+                answer = event[2]
+                if check(answer, room.current_answer):
+                    room.scores[name] += 1
+                    await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
+                    await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})
+                    await send_question(room, name)            
+                else:
+                    await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
+                
+                if room.num >= min(5, len(QUESTIONS)):
+                    await broadcast(room, {"type": "game_over", "final_score": room.scores[name]})
             else:
-                await send_msg(room.players[name], {"type": "result", "verdict": "wrong", "answer": room.current_answer})
-            
-            if room.num >= min(5, len(QUESTIONS)):
-                await send_msg(room.players[name], {"type": "game_over", "final_score": room.scores[name]})
-            else:
-                await send_question(room, name)            
+                await send_msg(room.players[name], {"type": "error", "msg": "Game has not started yet"})
+
         elif t == "leave":
             room.players.pop(name, None)
             room.scores.pop(name, None)
