@@ -65,7 +65,9 @@ async def receive_loop(writer):
             break
         elif t == "global":
             console.print(msg["msg"], style = "bold cyan")
-            
+        elif t in ("error", "reanswer"):
+            console.print(msg["msg"], style = "yellow")
+
 
     writer.close()
     await writer.wait_closed()
