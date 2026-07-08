@@ -37,21 +37,22 @@ async def input_loop(writer, username):
             await send_msg(writer, {"type": "submit", "answer": line})
 
 # Get from server and respond, no input
-async def receive_loop(writer):
+async def receive_loop(reader, writer):
     i = 0
     while True:
         msg = await read_msg(reader)
         if msg is None:
             break
         
-         t = msg["type"]
+        t = msg["type"]
         
         if t == "question":
             console.print(Text(f"~ Question {i + 1} ~", style = "misty_rose3"))
             out = Text(msg["text"], style = "white")
             out.highlight_regex(r"\d+", "bold yellow")
             console.print(out)
-            player_ans = input("> ")
+            console.print("> ", style = "white")
+            player_ans = await read_msg(reader)
             i += 1
             await send_msg(writer, {"type": "submit", "answer": player_ans})
         elif t == "result":
@@ -76,7 +77,6 @@ async def receive_loop(writer):
             console.print(msg["msg"], style = "bold cyan")
         elif t in ("error", "reanswer"):
             console.print(msg["msg"], style = "yellow")
-
 
     writer.close()
     await writer.wait_closed()
