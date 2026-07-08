@@ -38,7 +38,6 @@ async def input_loop(writer, username):
 
 # Get from server and respond, no input
 async def receive_loop(reader, writer):
-    i = 0
     while True:
         msg = await read_msg(reader)
         if msg is None:
@@ -47,13 +46,12 @@ async def receive_loop(reader, writer):
         t = msg["type"]
         
         if t == "question":
-            console.print(Text(f"~ Question {i + 1} ~", style = "misty_rose3"))
+            console.print(Text(f"~ Question {msg["num"]} ~", style = "misty_rose3"))
             out = Text(msg["text"], style = "white")
             out.highlight_regex(r"\d+", "bold yellow")
             console.print(out)
             console.print("> ", style = "white")
             player_ans = await read_msg(reader)
-            i += 1
             await send_msg(writer, {"type": "submit", "answer": player_ans})
         elif t == "result":
             if msg["verdict"] == "correct":
