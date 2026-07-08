@@ -65,9 +65,12 @@ async def receive_loop(writer):
             final_scores = msg["final_scores"]
             ranked = sorted(final_scores.items(), key = lambda x: x[1], reverse = True)
             medals = {0: "gold1", 1: "grey70", 2: "orange3"}
-            for index, key in msg["final_scores"]:
-                if index == 0:
-                    console.print()
+            for i, (name, pts) in enumerate(ranked):
+                col = medals.get(i, "red")
+                line = Text()
+                line.append(f"{i + 1}. ", style = col)
+                line.append(f"{name} - {pts} points", style = "white")
+                console.print(line)
             break
         elif t == "global":
             console.print(msg["msg"], style = "bold cyan")
