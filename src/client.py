@@ -26,6 +26,17 @@ panel = Panel(Align.center(t), box = box.ROUNDED, title = "✦ ✧ MATH BASH ✧
 
 console.print(Align.center(panel))
 
+# Client side input only
+async def input_loop(writer, username):
+    while True:
+        line = await asyncio.to_thread(input, "> ")
+        line = line.strip()
+        if line == "start":
+            await send_msg(writer, {"type": "start", "name": username})
+        else:
+            await send_msg(writer, {"type": "submit", "answer": line})
+
+# Get from server and respond, no input
 async def receive_loop(writer):
     i = 0
     while True:
@@ -61,6 +72,6 @@ async def main():
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(receive_loop(reader))
-        tg.create_task(input_loop(writer))
+        tg.create_task(input_loop(writer, username))
 
 asyncio.run(main())
