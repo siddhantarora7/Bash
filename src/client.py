@@ -65,7 +65,10 @@ async def receive_loop(reader):
                 col = medals.get(i, "red")
                 line = Text()
                 line.append(f"{i + 1}. ", style = col)
-                line.append(f"{name} - {pts} points", style = "white")
+                if pts == 1:
+                    line.append(f"{name} - {pts} point", style = "white")
+                else:
+                    line.append(f"{name} - {pts} points", style = "white")
                 console.print(line)
             break
         elif t == "global":
