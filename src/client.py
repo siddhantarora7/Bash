@@ -61,7 +61,13 @@ async def receive_loop(writer):
                 console.print(f"Incorrect! Answer is {msg['answer']}", style = "bold red")
             console.print()
         elif t == "game_over":
-            console.print(f"☄. *. ⋆ Final Score: {msg['final_score']} . . . . . ╰──╮", style = "dark_sea_green1")
+            console.print(f"☄. *. ⋆ Final Scores: . . . . . ╰──╮", style = "dark_sea_green1")
+            final_scores = msg["final_scores"]
+            ranked = sorted(final_scores.items(), key = lambda x: x[1], reverse = True)
+            medals = {0: "gold1", 1: "grey70", 2: "orange3"}
+            for index, key in msg["final_scores"]:
+                if index == 0:
+                    console.print()
             break
         elif t == "global":
             console.print(msg["msg"], style = "bold cyan")
