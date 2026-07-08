@@ -44,7 +44,9 @@ async def receive_loop(writer):
         if msg is None:
             break
         
-        if msg["type"] == "question":
+         t = msg["type"]
+        
+        if t == "question":
             console.print(Text(f"~ Question {i + 1} ~", style = "misty_rose3"))
             out = Text(msg["text"], style = "white")
             out.highlight_regex(r"\d+", "bold yellow")
@@ -52,15 +54,18 @@ async def receive_loop(writer):
             player_ans = input("> ")
             i += 1
             await send_msg(writer, {"type": "submit", "answer": player_ans})
-        elif msg["type"] == "result":
+        elif t == "result":
             if msg["verdict"] == "correct":
                 console.print("Correct!", style = "bold green")
             else:
                 console.print(f"Incorrect! Answer is {msg['answer']}", style = "bold red")
             console.print()
-        elif msg["type"] == "game_over":
+        elif t == "game_over":
             console.print(f"☄. *. ⋆ Final Score: {msg['final_score']} . . . . . ╰──╮", style = "dark_sea_green1")
             break
+        elif t == "global":
+            console.print(msg["msg"], style = "bold cyan")
+            
 
     writer.close()
     await writer.wait_closed()
