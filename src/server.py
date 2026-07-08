@@ -22,11 +22,20 @@ class Room:
     def reset(self):
         self.phase = "waiting"
         self.out = set()
-        self.pool(list(range(set(questions))))
+        self.pool = list(range(set(questions)))
         self.current_answer = None
         self.num = 0
         for name in self.scores:
             self.scores[name] = 0
+
+# Init global room dict dynamically populated upon room creation
+rooms = {}
+
+def get_room(name):
+    if name not in rooms:
+        rooms[name] = Room()
+        asyncio.create_task(room_loop(rooms[name]))
+    return rooms[name]
 
 # Convey a message to all players in a room
 async def broadcast(room, msg):
@@ -51,7 +60,8 @@ async def send_question(room):
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     join = await read_msg(reader)
-    name = join["name"]
+    room_name, name = join["room"], join["name"]
+    room = get_room(room_name)
     room.players[name] = writer
     room.scores[name] = 0
 
@@ -118,12 +128,8 @@ async def room_loop(room):
             room.players.pop(name, None)
             room.scores.pop(name, None)
 
-# Init global room object used for all games
-room = Room()
-
 # Actually start server
 async def main():
-    asyncio.create_task(room_loop(room))
     server = await asyncio.start_server(handle, "127.0.0.1", 8765)
     print("Server listening on 127.0.0.1:8765")
     async with server:

@@ -81,11 +81,12 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default = "127.0.0.1")
     parser.add_argument("--port", type = int, default = 8765)
+    parser.add_argument("--room", type = str, default = "default_room")
     args = parser.parse_args()
     
     username = input("Username > ")
     reader, writer = await asyncio.open_connection(args.host, args.port)
-    await send_msg(writer, {"type": "join", "name": username})
+    await send_msg(writer, {"type": "join", "name": username, "room": args.room})
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(receive_loop(reader))
