@@ -26,12 +26,7 @@ panel = Panel(Align.center(t), box = box.ROUNDED, title = "✦ ✧ MATH BASH ✧
 
 console.print(Align.center(panel))
 
-async def main():
-    username = input("Enter a username > ")
-    reader, writer = await asyncio.open_connection("127.0.0.1", 8765)
-
-    await send_msg(writer, {"type": "join", "name": username})
-
+async def receive_loop(writer):
     i = 0
     while True:
         msg = await read_msg(reader)
@@ -58,5 +53,14 @@ async def main():
 
     writer.close()
     await writer.wait_closed()
+
+async def main():
+    username = input("Username > ")
+    reader, writer = await asyncio.open_connection("127.0.0.1", 8765)
+    await send_msg(writer, {"type": "join", "name": username})
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(receive_loop(reader))
+        tg.create_task(input_loop(writer))
 
 asyncio.run(main())
