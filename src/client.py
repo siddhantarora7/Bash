@@ -1,4 +1,5 @@
 import asyncio
+import argparse
 from rich.console import Console
 from rich.text import Text
 from rich.panel import Panel
@@ -77,8 +78,13 @@ async def receive_loop(reader):
             console.print(msg["msg"], style = "yellow")
 
 async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", default = "127.0.0.1")
+    parser.add_argument("--port", type = int, default = 8765)
+    args = parser.parse_args()
+    
     username = input("Username > ")
-    reader, writer = await asyncio.open_connection("127.0.0.1", 8765)
+    reader, writer = await asyncio.open_connection(args.host, args.port)
     await send_msg(writer, {"type": "join", "name": username})
 
     async with asyncio.TaskGroup() as tg:

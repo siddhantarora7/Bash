@@ -18,15 +18,15 @@ class Room:
         self.current_answer = None
         self.num = 0
 
-# Reset room after game completion
-def reset(self):
-    self.phase = "waiting"
-    self.out = set()
-    self.pool(list(range(set(questions))))
-    self.current_answer = None
-    self.num = 0
-    for name in self.scores:
-        self.scores[name] = 0
+    # Reset room after game completion
+    def reset(self):
+        self.phase = "waiting"
+        self.out = set()
+        self.pool(list(range(set(questions))))
+        self.current_answer = None
+        self.num = 0
+        for name in self.scores:
+            self.scores[name] = 0
 
 # Convey a message to all players in a room
 async def broadcast(room, msg):
@@ -94,6 +94,7 @@ async def room_loop(room):
 
                         if room.num >= min(5, len(QUESTIONS)):
                             await broadcast(room, {"type": "game_over", "final_scores": room.scores})
+                            room.reset()
                         else:
                             await send_question(room)  
                     else:
@@ -109,6 +110,7 @@ async def room_loop(room):
                 await broadcast(room, {"type": "global", "msg": "Time's out!"})
                 if room.num >= min(5, len(QUESTIONS)):
                     await broadcast(room, {"type": "game_over", "final_scores": room.scores})
+                    room.reset()
                 else:
                     await send_question(room)
         elif t == "leave":
