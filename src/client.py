@@ -29,7 +29,7 @@ console.print(Align.center(panel))
 # Client side input only
 async def input_loop(writer, username):
     while True:
-        line = await asyncio.to_thread(input, "> ")
+        line = await asyncio.to_thread(input, "")
         line = line.strip()
         if line == "start":
             await send_msg(writer, {"type": "start", "name": username})
@@ -37,7 +37,7 @@ async def input_loop(writer, username):
             await send_msg(writer, {"type": "submit", "answer": line})
 
 # Get from server and respond, no input
-async def receive_loop(reader, writer):
+async def receive_loop(reader):
     while True:
         msg = await read_msg(reader)
         if msg is None:
@@ -46,13 +46,10 @@ async def receive_loop(reader, writer):
         t = msg["type"]
         
         if t == "question":
-            console.print(Text(f"~ Question {msg["num"]} ~", style = "misty_rose3"))
+            console.print(Text(f"~ Question {msg['num']} ~", style = "misty_rose3"))
             out = Text(msg["text"], style = "white")
             out.highlight_regex(r"\d+", "bold yellow")
             console.print(out)
-            console.print("> ", style = "white")
-            player_ans = await read_msg(reader)
-            await send_msg(writer, {"type": "submit", "answer": player_ans})
         elif t == "result":
             if msg["verdict"] == "correct":
                 console.print("Correct!", style = "bold green")
@@ -76,9 +73,6 @@ async def receive_loop(reader, writer):
         elif t in ("error", "reanswer"):
             console.print(msg["msg"], style = "yellow")
 
-    writer.close()
-    await writer.wait_closed()
-
 async def main():
     username = input("Username > ")
     reader, writer = await asyncio.open_connection("127.0.0.1", 8765)
@@ -87,5 +81,7 @@ async def main():
     async with asyncio.TaskGroup() as tg:
         tg.create_task(receive_loop(reader))
         tg.create_task(input_loop(writer, username))
+    writer.close()
+    await writer.wait_closed()
 
 asyncio.run(main())
