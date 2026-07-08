@@ -18,6 +18,16 @@ class Room:
         self.current_answer = None
         self.num = 0
 
+# Reset room after game completion
+def reset(self):
+    self.phase = "waiting"
+    self.out = set()
+    self.pool(list(range(set(questions))))
+    self.current_answer = None
+    self.num = 0
+    for name in self.scores:
+        self.scores[name] = 0
+
 # Convey a message to all players in a room
 async def broadcast(room, msg):
     for player in room.players:
@@ -107,7 +117,6 @@ async def room_loop(room):
             room.scores.pop(name, None)
 
 # Init global room object used for all games
-
 room = Room()
 
 # Actually start server
