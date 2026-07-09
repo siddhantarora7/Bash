@@ -27,7 +27,7 @@ class Room:
     def reset(self):
         self.phase = "waiting"
         self.out = set()
-        self.pool = list(range(set(questions)))
+        self.pool = list(range(len(QUESTIONS)))
         self.current_answer = None
         self.num = 0
         for name in self.scores:
@@ -36,10 +36,9 @@ class Room:
 # Init global room dict dynamically populated upon room creation
 rooms = {}
 
-def get_room(name, max_players = None, difficulty = None, countdown = None, rounds = None):
-    if name not in rooms:
-        rooms[name] = Room(max_players, difficulty, countdown, rounds)
-        asyncio.create_task(room_loop(rooms[name]))
+def create_room(name, max_players = None, difficulty = None, countdown = None, rounds = None):
+    rooms[name] = Room(max_players, difficulty, countdown, rounds)
+    asyncio.create_task(room_loop(rooms[name]))
     return rooms[name]
 
 # Convey a message to all players in a room
@@ -65,18 +64,22 @@ async def send_question(room):
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     init = await read_msg(reader)
-    name = init["name"]
+    name, room_name = init["name"], init["room"]
     
     if init["type"] == "create":
         max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
-        room = get_room(room_name, max_players, difficulty, countdown, rounds)
+        room = create_room(room_name, max_players, difficulty, countdown, rounds)
     else:
-        if name not in rooms:
+        if room_name not in rooms:
             await send_msg(writer, {"type": "error", "msg": "Room does not exist"})
+            writer.close()
+            return
         else:
-            room = get_room(room_name)
-            if len(room.players) == room.max_players:
+            room = rooms[room_name]
+            if len(room.players) >= room.max_players:
                 await send_msg(writer, {"type": "error", "msg": "Room reached max capacity"})
+                writer.close()
+                return
     
     room.players[name] = writer
     room.scores[name] = 0
@@ -134,7 +137,7 @@ async def room_loop(room):
             num = event[1]
             if num == room.num:
                 await broadcast(room, {"type": "global", "msg": "Time's out!"})
-                if room.num >= min(len(QUESTIONS), room.rounds)
+                if room.num >= min(len(QUESTIONS), room.rounds):
                     await broadcast(room, {"type": "game_over", "final_scores": room.scores})
                     room.reset()
                 else:

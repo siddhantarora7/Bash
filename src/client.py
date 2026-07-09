@@ -82,7 +82,7 @@ async def main():
     parser.add_argument("--host", default = "127.0.0.1")
     parser.add_argument("--port", type = int, default = 8765)
     parser.add_argument("--room", type = str, default = "default_room")
-    parser.add_argument("--create")
+    parser.add_argument("--create", action = "store_true")
     parser.add_argument("--max_players", type = int, default = 8)
     parser.add_argument("--difficulty", type = str, default = "any")
     parser.add_argument("--countdown", type = int, default = 15)
@@ -93,7 +93,7 @@ async def main():
     reader, writer = await asyncio.open_connection(args.host, args.port)
 
     if args.create:
-        await send_msg(writer, {"type": "create", "name": username, "room": args.room, "max_players": args.max_players, "difficulty": args.difficulty, "countdown": args.countdown, "rounds", args.rounds})
+        await send_msg(writer, {"type": "create", "name": username, "room": args.room, "max_players": args.max_players, "difficulty": args.difficulty, "countdown": args.countdown, "rounds": args.rounds})
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": args.room})
 
