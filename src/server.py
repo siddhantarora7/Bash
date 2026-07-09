@@ -36,9 +36,9 @@ class Room:
 # Init global room dict dynamically populated upon room creation
 rooms = {}
 
-def get_room(name):
+def get_room(name, max_players = None, difficulty = None, countdown = None, rounds = None):
     if name not in rooms:
-        rooms[name] = Room()
+        rooms[name] = Room(max_players, difficulty, countdown, rounds)
         asyncio.create_task(room_loop(rooms[name]))
     return rooms[name]
 
@@ -64,8 +64,14 @@ async def send_question(room):
 
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
-    join = await read_msg(reader)
-    room_name, name = join["room"], join["name"]
+    init = await read_msg(reader)
+    
+    if init["type"] == "create":
+        max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
+        room = get_room(room_name, max_players, difficulty, countdown, rounds)
+    else:
+        room = get_room(room_name)
+    
     room = get_room(room_name)
     room.players[name] = writer
     room.scores[name] = 0
