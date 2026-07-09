@@ -65,6 +65,7 @@ async def send_question(room):
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     init = await read_msg(reader)
+    name = init["name"]
     
     if init["type"] == "create":
         max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
