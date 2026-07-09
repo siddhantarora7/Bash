@@ -4,6 +4,7 @@ from rich.console import Console
 from rich.text import Text
 from rich.panel import Panel
 from rich.align import Align
+from rich.table import Table
 from rich import box
 from protocols import send_msg, read_msg
 
@@ -81,6 +82,7 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default = "127.0.0.1")
     parser.add_argument("--port", type = int, default = 8765)
+    parser.add_argument("--list", action = "store_true")
     parser.add_argument("--room", type = str, default = "default_room")
     parser.add_argument("--create", action = "store_true")
     parser.add_argument("--max_players", type = int, default = 8)
@@ -94,6 +96,24 @@ async def main():
 
     if args.create:
         await send_msg(writer, {"type": "create", "name": username, "room": args.room, "max_players": args.max_players, "difficulty": args.difficulty, "countdown": args.countdown, "rounds": args.rounds})
+    elif args.list:
+        await send_msg(writer, {"type": "list"})
+        msg = await read_msg(reader)
+        table = Table(title = "Room Catalog", show_header = True, header_style = "white")
+        
+        table.add_column("Name", style = "dim", width = 12)
+        table.add_column("Players", style = "white")
+        table.add_column("Difficulty", style = "white")
+        table.add_column("Status", style = "white")
+        table.add_column("Leader", style = "white")
+
+        for key in msg:
+            table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"])
+
+        console.print(table)
+        writer.close()
+        await writer.wait_close()
+        return
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": args.room})
 

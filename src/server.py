@@ -61,6 +61,11 @@ async def send_question(room):
     asyncio.create_task(start_timer(room, room.num, room.countdown))
     await broadcast(room, {"type": "question", "num": room.num, "text": q.question})
 
+def leader_of(room):
+    if not room.scores:
+        return None
+    return max(room.scores, key = room.scores.get)
+
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     init = await read_msg(reader)
@@ -69,6 +74,22 @@ async def handle(reader, writer):
     if init["type"] == "create":
         max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
         room = create_room(room_name, max_players, difficulty, countdown, rounds)
+    elif init["type"] == "list":
+        catalog = []
+        for rname, room in rooms.items():
+            catalog.append({
+                "name": rname,
+                "players": len(room.players),
+                "max_players": room.max_players,
+                "difficulty": room.difficulty,
+                "phase": room.phase,
+                "leader": leader_of(room),
+            })
+        await send_msg(writer, {"type": "catalog", "rooms": catalog})
+        # Temporary
+        writer.close()
+        await writer.wait_closed()
+        return
     else:
         if room_name not in rooms:
             await send_msg(writer, {"type": "error", "msg": "Room does not exist"})
