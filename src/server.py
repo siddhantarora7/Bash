@@ -69,12 +69,8 @@ def leader_of(room):
 # Client - Server communication over socket opened by main(), handles queue input only
 async def handle(reader, writer):
     init = await read_msg(reader)
-    name, room_name = init["name"], init["room"]
-    
-    if init["type"] == "create":
-        max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
-        room = create_room(room_name, max_players, difficulty, countdown, rounds)
-    elif init["type"] == "list":
+
+    if init["type"] == "list":
         catalog = []
         for rname, room in rooms.items():
             catalog.append({
@@ -90,6 +86,12 @@ async def handle(reader, writer):
         writer.close()
         await writer.wait_closed()
         return
+
+    name, room_name = init["name"], init["room"]
+    
+    if init["type"] == "create":
+        max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
+        room = create_room(room_name, max_players, difficulty, countdown, rounds)
     else:
         if room_name not in rooms:
             await send_msg(writer, {"type": "error", "msg": "Room does not exist"})

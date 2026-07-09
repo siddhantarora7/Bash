@@ -107,12 +107,12 @@ async def main():
         table.add_column("Status", style = "white")
         table.add_column("Leader", style = "white")
 
-        for key in msg:
-            table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"])
+        for key in msg["rooms"]:
+            table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"] or "-")
 
         console.print(table)
         writer.close()
-        await writer.wait_close()
+        await writer.wait_closed()
         return
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": args.room})
