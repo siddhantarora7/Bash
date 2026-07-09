@@ -70,9 +70,13 @@ async def handle(reader, writer):
         max_players, difficulty, countdown, rounds = init["max_players"], init["difficulty"], init["countdown"], init["rounds"]
         room = get_room(room_name, max_players, difficulty, countdown, rounds)
     else:
-        room = get_room(room_name)
+        if name not in rooms:
+            await send_msg(writer, {"type": "error", "msg": "Room does not exist"})
+        else:
+            room = get_room(room_name)
+            if len(room.players) == room.max_players:
+                await send_msg(writer, {"type": "error", "msg": "Room reached max capacity"})
     
-    room = get_room(room_name)
     room.players[name] = writer
     room.scores[name] = 0
 

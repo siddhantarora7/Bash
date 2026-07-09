@@ -82,6 +82,10 @@ async def main():
     parser.add_argument("--host", default = "127.0.0.1")
     parser.add_argument("--port", type = int, default = 8765)
     parser.add_argument("--room", type = str, default = "default_room")
+    parser.add_argument("--max_players", type = int)
+    parser.add_argument("--difficulty", type = str)
+    parser.add_argument("--countdown", type = int)
+    parser.add_argument("--rounds", type = int)
     args = parser.parse_args()
     
     username = input("Username > ")
