@@ -7,7 +7,7 @@ from questions import load, check
 QUESTIONS = load()
 
 class Room:
-    def __init__(self):
+    def __init__(self, max_players = 8, difficulty = "any", countdown = 15, rounds = 5):
         self.queue = asyncio.Queue()
         self.host = None
         self.phase = "waiting"
@@ -17,6 +17,11 @@ class Room:
         self.pool = list(range(len(QUESTIONS)))
         self.current_answer = None
         self.num = 0
+        self.rng = random.Random()
+        self.max_players = max_players
+        self.difficulty = difficulty
+        self.countdown = countdown
+        self.rounds = rounds
 
     # Reset room after game completion
     def reset(self):
@@ -49,12 +54,12 @@ async def start_timer(room, num, time=15):
 # Sed question via socket
 async def send_question(room):
     room.out = set()
-    idx = random.choice(room.pool)
+    idx = room.rng.choice(room.pool)
     room.pool.remove(idx)
     q = QUESTIONS[idx]
     room.current_answer = q.answer
     room.num += 1
-    asyncio.create_task(start_timer(room, room.num))
+    asyncio.create_task(start_timer(room, room.num, room.countdown))
     await broadcast(room, {"type": "question", "num": room.num, "text": q.question})
 
 # Client - Server communication over socket opened by main(), handles queue input only
@@ -102,7 +107,7 @@ async def room_loop(room):
                         await send_msg(room.players[name], {"type": "result", "verdict": "correct", "answer": room.current_answer})
                         await broadcast(room, {"type": "global", "msg": f"Player {name} bashed it!"})   
 
-                        if room.num >= min(5, len(QUESTIONS)):
+                        if room.num >= min(len(QUESTIONS),room.rounds):
                             await broadcast(room, {"type": "game_over", "final_scores": room.scores})
                             room.reset()
                         else:
@@ -118,7 +123,7 @@ async def room_loop(room):
             num = event[1]
             if num == room.num:
                 await broadcast(room, {"type": "global", "msg": "Time's out!"})
-                if room.num >= min(5, len(QUESTIONS)):
+                if room.num >= min(len(QUESTIONS), room.rounds)
                     await broadcast(room, {"type": "game_over", "final_scores": room.scores})
                     room.reset()
                 else:
