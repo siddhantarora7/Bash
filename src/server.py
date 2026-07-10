@@ -115,7 +115,7 @@ async def handle(reader, writer):
     while True:
         msg = await read_msg(reader)
         if msg is None:
-            await room.queue.put(("leave", name))
+            await room.queue.put(("leave", name, room_name))
             break
         if msg["type"] == "start":
             if name == room.host:
@@ -166,9 +166,12 @@ async def room_loop(room):
                 else:
                     await send_question(room)
         elif t == "leave":
-            name = event[1]
+            name, room_name = event[1], event[2]
             room.players.pop(name, None)
             room.scores.pop(name, None)
+            if not room.players:
+                rooms.pop(room_name, None)
+                return
 
 # Actually start server
 async def main():

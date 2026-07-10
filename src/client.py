@@ -48,6 +48,7 @@ async def run_lobby(host, port, username):
         reader, writer = await asyncio.open_connection(host, port)
         await send_msg(writer, {"type": "list"})
         msg = await read_msg(reader)
+        console.rule("[bold cyan]LOBBY[/bold cyan]")
         render_catalog(msg["rooms"])
         writer.close()
         await writer.wait_closed()
