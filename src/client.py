@@ -45,6 +45,28 @@ def render_catalog(rooms):
     await writer.wait_closed()
     return
 
+async def run_lobby(host, port, username):
+    while True:
+        reader, writer = await asyncio.open_connection(host, port)
+        await send_msg(writer, {"type": "list"})
+        msg = await read_msg(reader)
+        render_catalog(msg["rooms"])
+        writer.close()
+        await writer.wait_closed()
+
+        cmd = (await asyncio.to_thread(input, "lobby > ")).strip().split()
+
+        if not cmd or cmd[0] == "refresh":
+            continue
+        if cmd[0] == "quit":
+            return None
+        elif cmd[0] == "join" and len(cmd) >= 2:
+            return {"type": "join", "room": cmd[1]}
+        elif cmd[0] == "create" and len(cmd) >= 2:
+            return {"action": "create", "room": cmd[1]}
+        else:
+            console.print("Commands: refresh | join <room> | create <room> | quit", style = "yellow")
+
 # Client side input only
 async def input_loop(writer, username):
     while True:
