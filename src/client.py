@@ -41,9 +41,6 @@ def render_catalog(rooms):
         table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"] or "-")
 
     console.print(table)
-    writer.close()
-    await writer.wait_closed()
-    return
 
 # Render lobby and get next cmd upon start
 async def run_lobby(host, port, username):
@@ -62,7 +59,7 @@ async def run_lobby(host, port, username):
         if cmd[0] == "quit":
             return None
         elif cmd[0] == "join" and len(cmd) >= 2:
-            return {"type": "join", "room": cmd[1]}
+            return {"action": "join", "room": cmd[1]}
         elif cmd[0] == "create" and len(cmd) >= 2:
             return {"action": "create", "room": cmd[1]}
         else:
@@ -75,8 +72,17 @@ async def run_game(host, port, username, choice):
         await send_msg(writer, {"type": "create", "name": username, "room": choice["room"], "max_players": 8, "difficulty": "any", "countdown": 15, "rounds": 3})
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": choice["room"]})
+
+    recv = asyncio.create_task(receive_loop(reader))
+    inp = asyncio.create_task(input_loop(writer, username))
+
+    await recv
+    inp.cancel()
+    try:
+        await inp
+    except asyncio.CancelledError:
+            pass
     
-    done = await asyncio.wait(receive_loop, return_when=asyncio.FIRST_COMPLETED)
     writer.close()
     await writer.wait_closed()
 
@@ -137,10 +143,12 @@ async def main():
     args = parser.parse_args()
     
     username = input("Username > ")
-    choice = await run_lobby(host, port, username)
-    if choice is none:
-        break
+    
+    while True:
+        choice = await run_lobby(args.host, args.port, username)
+        if choice is none:
+            break
 
-    await run_game(choice)
+        await run_game(args.host, args.port, username, choice)
 
 asyncio.run(main())
