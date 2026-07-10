@@ -28,6 +28,23 @@ panel = Panel(Align.center(t), box = box.ROUNDED, title = "✦ ✧ MATH BASH ✧
 
 console.print(Align.center(panel))
 
+def render_catalog(rooms):
+    table = Table(title = "Room Catalog", show_header = True, header_style = "white")
+        
+    table.add_column("Name", style = "dim", width = 12)
+    table.add_column("Players", style = "white")
+    table.add_column("Difficulty", style = "white")
+    table.add_column("Status", style = "white")
+    table.add_column("Leader", style = "white")
+
+    for key in rooms:
+        table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"] or "-")
+
+    console.print(table)
+    writer.close()
+    await writer.wait_closed()
+    return
+
 # Client side input only
 async def input_loop(writer, username):
     while True:
@@ -99,21 +116,7 @@ async def main():
     elif args.list:
         await send_msg(writer, {"type": "list"})
         msg = await read_msg(reader)
-        table = Table(title = "Room Catalog", show_header = True, header_style = "white")
-        
-        table.add_column("Name", style = "dim", width = 12)
-        table.add_column("Players", style = "white")
-        table.add_column("Difficulty", style = "white")
-        table.add_column("Status", style = "white")
-        table.add_column("Leader", style = "white")
-
-        for key in msg["rooms"]:
-            table.add_row(key["name"], f"{key['players']}/{key['max_players']}", key["difficulty"], key["phase"], key["leader"] or "-")
-
-        console.print(table)
-        writer.close()
-        await writer.wait_closed()
-        return
+        render_catalog(msg["rooms"])
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": args.room})
 
