@@ -45,6 +45,7 @@ def render_catalog(rooms):
     await writer.wait_closed()
     return
 
+# Render lobby and get next cmd upon start
 async def run_lobby(host, port, username):
     while True:
         reader, writer = await asyncio.open_connection(host, port)
@@ -66,6 +67,18 @@ async def run_lobby(host, port, username):
             return {"action": "create", "room": cmd[1]}
         else:
             console.print("Commands: refresh | join <room> | create <room> | quit", style = "yellow")
+
+# Initiate game from lobby cmd
+async def run_game(host, port, username, choice):
+    reader, writer = await asyncio.open_connection(host, port)
+    if choice["action"] == "create":
+        await send_msg(writer, {"type": "create", "name": username, "room": choice["room"], "max_players": 8, "difficulty": "any", "countdown": 15, "rounds": 3})
+    else:
+        await send_msg(writer, {"type": "join", "name": username, "room": choice["room"]})
+    
+    done = await asyncio.wait(receive_loop, return_when=asyncio.FIRST_COMPLETED)
+    writer.close()
+    await writer.wait_closed()
 
 # Client side input only
 async def input_loop(writer, username):
@@ -121,31 +134,13 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default = "127.0.0.1")
     parser.add_argument("--port", type = int, default = 8765)
-    parser.add_argument("--list", action = "store_true")
-    parser.add_argument("--room", type = str, default = "default_room")
-    parser.add_argument("--create", action = "store_true")
-    parser.add_argument("--max_players", type = int, default = 8)
-    parser.add_argument("--difficulty", type = str, default = "any")
-    parser.add_argument("--countdown", type = int, default = 15)
-    parser.add_argument("--rounds", type = int, default = 5)
     args = parser.parse_args()
     
     username = input("Username > ")
-    reader, writer = await asyncio.open_connection(args.host, args.port)
+    choice = await run_lobby(host, port, username)
+    if choice is none:
+        break
 
-    if args.create:
-        await send_msg(writer, {"type": "create", "name": username, "room": args.room, "max_players": args.max_players, "difficulty": args.difficulty, "countdown": args.countdown, "rounds": args.rounds})
-    elif args.list:
-        await send_msg(writer, {"type": "list"})
-        msg = await read_msg(reader)
-        render_catalog(msg["rooms"])
-    else:
-        await send_msg(writer, {"type": "join", "name": username, "room": args.room})
-
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(receive_loop(reader))
-        tg.create_task(input_loop(writer, username))
-    writer.close()
-    await writer.wait_closed()
+    await run_game(choice)
 
 asyncio.run(main())
