@@ -42,35 +42,58 @@ def render_catalog(rooms):
 
     console.print(table)
 
-# Render lobby and get next cmd upon start
-async def run_lobby(host, port, username):
-    while True:
-        reader, writer = await asyncio.open_connection(host, port)
+# Render lobby ever 5 secs
+async def rerender(host, port, lobby, time = 5):
+    reader, writer = await asyncio.open_connection(host, port)
+    while lobby and not lobby.done():
+        await asyncio.sleep(time)
         await send_msg(writer, {"type": "list"})
         msg = await read_msg(reader)
         console.rule("[bold cyan]LOBBY[/bold cyan]")
         render_catalog(msg["rooms"])
-        writer.close()
-        await writer.wait_closed()
+    writer.close()
+    await writer.wait_closed()
 
-        cmd = (await asyncio.to_thread(input, "lobby > ")).strip().split()
+# Render lobby initially and get next cmd upon start
+async def run_lobby(host, port, username):
+    inp = asyncio.create_task(asyncio.to_thread(input, "Lobby > "))
+    try:
+        while True:
+            reader, writer = await asyncio.open_connection(host, port)
+            await send_msg(writer, {"type": "list"})
+            msg = await read_msg(reader)
+            writer.close()
+            await writer.wait_closed()
 
-        if not cmd or cmd[0] == "refresh":
-            continue
-        if cmd[0] == "quit":
-            return None
-        elif cmd[0] == "join" and len(cmd) >= 2:
-            return {"action": "join", "room": cmd[1]}
-        elif cmd[0] == "create" and len(cmd) >= 2:
-            return {"action": "create", "room": cmd[1]}
-        else:
-            console.print("Commands: refresh | join <room> | create <room> | quit", style = "yellow")
+            console.rule("[bold cyan]LOBBY[/bold cyan]")
+            render_catalog(msg["rooms"])
+
+            try:
+                line = await asyncio.wait_for(asyncio.shield(inp), timeout = 5)
+            except asyncio.TimeoutError:
+                continue
+
+            cmd = line.strip().split()
+            if not cmd or cmd[0] == "refresh":
+                continue
+            if cmd[0] == "quit":
+                return None
+            elif cmd[0] == "join" and len(cmd) >= 2:
+                return {"action": "join", "room": cmd[1]}
+            elif cmd[0] == "create" and len(cmd) >= 2:
+                if len(cmd) >= 6:
+                    return {"action": "create", "room": cmd[1], "max_players": int(cmd[2]), "difficulty": cmd[3], "countdown": int(cmd[4]), "rounds": int(cmd[5])}
+                return {"action": "create", "room": cmd[1],
+                        "max_players": 8, "difficulty": "any", "countdown": 15, "rounds": 5}
+            else:
+                console.print("Commands: refresh | join <room> | create <room> | quit", style = "yellow")
 
 # Initiate game from lobby cmd
 async def run_game(host, port, username, choice):
     reader, writer = await asyncio.open_connection(host, port)
     if choice["action"] == "create":
-        await send_msg(writer, {"type": "create", "name": username, "room": choice["room"], "max_players": 8, "difficulty": "any", "countdown": 15, "rounds": 3})
+        await send_msg(writer, {"type": "create", "name": username, "room": choice["room"], "max_players": choice["max_players"],
+         "difficulty": choice["difficulty"], "countdown": choice["countdown"], "rounds": choice["rounds"]})
     else:
         await send_msg(writer, {"type": "join", "name": username, "room": choice["room"]})
 
@@ -146,7 +169,8 @@ async def main():
     username = input("Username > ")
     
     while True:
-        choice = await run_lobby(args.host, args.port, username)
+        lobby = asyncio.create_task(run_lobby(args.host, args.port, username))
+        choice = await lobby
         if choice is None:
             break
 
