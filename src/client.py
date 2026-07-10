@@ -146,7 +146,7 @@ async def main():
     
     while True:
         choice = await run_lobby(args.host, args.port, username)
-        if choice is none:
+        if choice is None:
             break
 
         await run_game(args.host, args.port, username, choice)
